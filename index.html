@@ -1,156 +1,92 @@
 <!DOCTYPE html>
 <html lang="jv">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hera & Indah — Undangan Pernikahan</title>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hera & Indah</title>
 
-    <link
-      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Poppins:wght@300;400;500&display=swap"
-      rel="stylesheet"
-    />
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 
-    <style>
-      :root {
-        --bg: #0e0c0a;
-        --gold: #d4af6a;
-        --text: #f5f2eb;
-        --soft: #1a1714;
-      }
-      body {
-        margin: 0;
-        font-family: Poppins, sans-serif;
-        background: var(--bg);
-        color: var(--text);
-        text-align: center;
-      }
-      section {
-        padding: 90px 20px;
-      }
-      .btn {
-        padding: 14px 36px;
-        border: 1px solid var(--gold);
-        background: transparent;
-        color: var(--text);
-        cursor: pointer;
-      }
-      .btn:hover {
-        background: var(--gold);
-        color: #000;
-      }
-      .card {
-        background: var(--soft);
-        max-width: 360px;
-        margin: 30px auto;
-        padding: 30px;
-      }
-      input,
-      textarea,
-      select {
-        width: 100%;
-        padding: 12px;
-        margin-top: 10px;
-        background: #111;
-        border: 1px solid var(--gold);
-        color: #fff;
-      }
-      #line {
-        width: 80px;
-        height: 2px;
-        background: var(--gold);
-        margin: 20px auto;
-      }
-      #qrcode {
-        margin-top: 25px;
-      }
-    </style>
-  </head>
+<style>
+body{margin:0;font-family:Poppins;background:#0e0c0a;color:#f5f2eb;text-align:center}
+section{padding:80px 20px}
+.card{background:#1a1714;max-width:360px;margin:auto;padding:30px}
+input,textarea,select{width:100%;padding:12px;margin-top:10px;background:#111;border:1px solid #d4af6a;color:#fff}
+button{margin-top:15px;padding:12px 30px;background:transparent;border:1px solid #d4af6a;color:#fff}
+#qrcode{margin-top:20px}
+</style>
+</head>
 
-  <body>
-    <section>
-      <h1>Hera & Indah</h1>
-      <p>23 Mei 2026 • Gawok</p>
-    </section>
+<body>
 
-    <section>
-      <h2>RSVP & Buku Tamu</h2>
-      <div id="line"></div>
+<section>
+<h1>Hera & Indah</h1>
+<p>23 Mei 2026 • Gawok</p>
+</section>
 
-      <div class="card">
-        <input id="nama" placeholder="Asma Panjenengan" />
-        <select id="hadir">
-          <option value="Hadir">Inggih, rawuh</option>
-          <option value="Tidak Hadir">Mboten saged rawuh</option>
-        </select>
-        <textarea id="pesan" placeholder="Pangestu & donga"></textarea>
-        <button class="btn" onclick="submitRSVP()">KIRIM</button>
+<section>
+<h2>RSVP & Buku Tamu</h2>
+<div class="card">
+  <input id="nama" placeholder="Asma Panjenengan">
+  <select id="hadir">
+    <option value="Hadir">Inggih, rawuh</option>
+    <option value="Tidak Hadir">Mboten saged rawuh</option>
+  </select>
+  <textarea id="pesan" placeholder="Pangestu & donga"></textarea>
+  <button onclick="submitRSVP()">KIRIM</button>
+  <div id="qrcode"></div>
+</div>
+</section>
 
-        <div id="qrcode"></div>
-      </div>
-    </section>
+<script>
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbyPnPCi2hmeK8vDMfL-RayvVmCI7-RrIeAMD-j2WZc4IO32b7XYj-Kt6LCn7-ISRVpwZw/exec";
 
-    <script>
-      const SHEET_URL =
-        "https://script.google.com/macros/s/AKfycbyPnPCi2hmeK8vDMfL-RayvVmCI7-RrIeAMD-j2WZc4IO32b7XYj-Kt6LCn7-ISRVpwZw/exec";
+function token(){
+  return Math.random().toString(36).substring(2,10)+Date.now().toString(36);
+}
 
-      function generateToken() {
-        return (
-          Math.random().toString(36).substring(2, 10) + Date.now().toString(36)
-        );
-      }
+function showQR(nama,token){
+  document.getElementById("qrcode").innerHTML="";
+  new QRCode(document.getElementById("qrcode"),{
+    text:nama+"|"+token,
+    width:180,height:180,
+    colorDark:"#d4af6a",colorLight:"#000"
+  });
+}
 
-      function generateQR(nama, token) {
-        document.getElementById("qrcode").innerHTML = "";
-        new QRCode(document.getElementById("qrcode"), {
-          text: nama + "|" + token,
-          width: 180,
-          height: 180,
-          colorDark: "#d4af6a",
-          colorLight: "#000",
-        });
-      }
+function submitRSVP(){
+  const nama=namaEl.value.trim();
+  if(!nama){alert("Isi asma panjenengan");return;}
+  const hadir=hadirEl.value;
+  const pesan=pesanEl.value;
+  const t=token();
 
-      function submitRSVP() {
-        const nama = document.getElementById("nama").value.trim();
-        const hadir = document.getElementById("hadir").value;
-        const pesan = document.getElementById("pesan").value;
+  localStorage.setItem("qrToken",t);
+  localStorage.setItem("qrNama",nama);
 
-        if (!nama) {
-          alert("Mangga isi asma panjenengan");
-          return;
-        }
+  const p=new URLSearchParams();
+  p.append("mode","rsvp");
+  p.append("nama",nama);
+  p.append("hadir",hadir);
+  p.append("pesan",pesan);
+  p.append("token",t);
 
-        const token = generateToken();
-        localStorage.setItem("qrToken", token);
-        localStorage.setItem("qrNama", nama);
+  fetch(SHEET_URL,{method:"POST",body:p})
+    .then(()=>{showQR(nama,t);alert("RSVP tersimpan");})
+    .catch(()=>alert("Gagal simpan"));
+}
 
-        fetch(SHEET_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            mode: "rsvp",
-            nama,
-            hadir,
-            pesan,
-            token,
-          }),
-        })
-          .then((res) => res.json())
-          .then(() => {
-            generateQR(nama, token);
-            alert("Matur nuwun 🙏 RSVP sampun kacathet");
-          })
-          .catch(() => alert("Gagal nyimpen data"));
-      }
+const namaEl=document.getElementById("nama");
+const hadirEl=document.getElementById("hadir");
+const pesanEl=document.getElementById("pesan");
 
-      window.onload = () => {
-        const token = localStorage.getItem("qrToken");
-        const nama = localStorage.getItem("qrNama");
-        if (token && nama) generateQR(nama, token);
-      };
-    </script>
-  </body>
+window.onload=()=>{
+  const t=localStorage.getItem("qrToken");
+  const n=localStorage.getItem("qrNama");
+  if(t&&n) showQR(n,t);
+};
+</script>
+
+</body>
 </html>
-
-
