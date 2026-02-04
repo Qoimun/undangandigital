@@ -1,4 +1,4 @@
-const SHEET_URL = "https://script.google.com/macros/s/AKfycbyPnPCi2hmeK8vDMfL-RayvVmCI7-RrIeAMD-j2WZc4IO32b7XYj-Kt6LCn7-ISRVpwZw/exec";
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbyI3EEgA9H601DWrKh8q9UygS3x0G6wb4ZTQr1BUjPQtKOs1U96egU7nhIkObxlMzcYMA/exec";
 const statusBox = document.getElementById("status");
 
 /* SIMPAN OFFLINE */
@@ -58,4 +58,5 @@ new Html5Qrcode("reader").start(
   { fps: 10, qrbox: 250 },
   onScanSuccess
 );
+
 
