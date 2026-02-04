@@ -1,0 +1,8 @@
+{
+  "name": "Scan QR Pernikahan",
+  "short_name": "Scan QR",
+  "start_url": "./scan.html",
+  "display": "standalone",
+  "background_color": "#0e0c0a",
+  "theme_color": "#0e0c0a"
+}
