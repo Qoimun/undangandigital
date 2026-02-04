@@ -399,16 +399,12 @@
     <script>
       /* --- 1. LOGIC DATA & RSVP --- */
       const SHEET_URL =
-        "https://script.google.com/macros/s/AKfycbzJsKL1O01UuV6d9OaZDUt0sZ0SkRzTXFxOmqBNKSA_fEbi6Ys-RUy3A3OFpbJdsDkr/exec";
+        "https://script.google.com/macros/s/AKfycbxIAcP_VYHpWg7g8MNDaW-VnZEeIwQTW8AbYx2EtMdCFgBsV6xWoMXvKvYyvbn-dZPcxQ/exec";
 
       function generateToken() {
-        return (
-          "TAMU-" +
-          Date.now() +
-          "-" +
-          Math.random().toString(36).substr(2, 6).toUpperCase()
-        );
-      }
+  return Math.random().toString(36).substring(2, 10) +
+         Date.now().toString(36);
+}
 
       function tampilkanQR(token) {
         const container = document.getElementById("qr-section");
@@ -568,3 +564,4 @@
     </script>
   </body>
 </html>
+
