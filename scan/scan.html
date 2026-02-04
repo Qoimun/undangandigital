@@ -1,82 +1,52 @@
 <!DOCTYPE html>
 <html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Scan QR Check-in</title>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scan QR</title>
+<script src="https://unpkg.com/html5-qrcode"></script>
 
-    <script src="https://unpkg.com/html5-qrcode"></script>
+<style>
+body{background:#0e0c0a;color:#d4af6a;font-family:Arial;text-align:center}
+#reader{width:300px;margin:30px auto}
+</style>
+</head>
 
-    <style>
-      body {
-        background: #0e0c0a;
-        color: #d4af6a;
-        font-family: Arial;
-        text-align: center;
-      }
-      #reader {
-        width: 300px;
-        margin: 30px auto;
-      }
-      #status {
-        font-size: 18px;
-        margin-top: 15px;
-      }
-    </style>
-  </head>
+<body>
 
-  <body>
-    <h2>SCAN QR TAMU</h2>
-    <p>Arahkan kamera ke QR undangan</p>
+<h2>SCAN QR TAMU</h2>
+<div id="reader"></div>
+<p id="status">Siap scan…</p>
 
-    <div id="reader"></div>
-    <p id="status">Siap scan…</p>
+<script>
+const SHEET_URL="https://script.google.com/macros/s/AKfycbyPnPCi2hmeK8vDMfL-RayvVmCI7-RrIeAMD-j2WZc4IO32b7XYj-Kt6LCn7-ISRVpwZw/exec";
+let lock=false;
 
-    <script>
-      const SHEET_URL =
-        "https://script.google.com/macros/s/AKfycbyPnPCi2hmeK8vDMfL-RayvVmCI7-RrIeAMD-j2WZc4IO32b7XYj-Kt6LCn7-ISRVpwZw/exec";
-      let locked = false;
+function onScanSuccess(txt){
+  if(lock)return;
+  lock=true;
+  const token=txt.split("|")[1];
 
-      function onScanSuccess(decodedText) {
-        if (locked) return;
-        locked = true;
+  const p=new URLSearchParams();
+  p.append("mode","checkin");
+  p.append("token",token);
 
-        const token = decodedText.split("|")[1];
-        document.getElementById("status").innerText = "⏳ Mengirim data…";
+  fetch(SHEET_URL,{method:"POST",body:p})
+    .then(r=>r.text())
+    .then(r=>{
+      if(r==="success") status.innerText="✅ Check-in berhasil";
+      else if(r==="duplicate") status.innerText="⚠️ Sudah digunakan";
+      else status.innerText="❌ Tidak ditemukan";
+    })
+    .finally(()=>setTimeout(()=>lock=false,1500));
+}
 
-        fetch(SHEET_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mode: "checkin", token }),
-        })
-          .then((res) => res.json())
-          .then((res) => {
-            if (res.status === "success") {
-              document.getElementById("status").innerText =
-                "✅ Check-in berhasil";
-              navigator.vibrate?.(200);
-            } else if (res.status === "duplicate") {
-              document.getElementById("status").innerText =
-                "⚠️ QR sudah digunakan";
-            } else {
-              document.getElementById("status").innerText =
-                "❌ Data tidak ditemukan";
-            }
-          })
-          .catch(
-            () =>
-              (document.getElementById("status").innerText = "❌ Gagal koneksi")
-          )
-          .finally(() => setTimeout(() => (locked = false), 1500));
-      }
+new Html5Qrcode("reader").start(
+  {facingMode:"environment"},
+  {fps:10,qrbox:250},
+  onScanSuccess
+);
+</script>
 
-      new Html5Qrcode("reader").start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
-        onScanSuccess
-      );
-    </script>
-  </body>
+</body>
 </html>
-
-
