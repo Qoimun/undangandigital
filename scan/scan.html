@@ -1,130 +1,87 @@
 <!DOCTYPE html>
 <html lang="id">
-  <head>
-    <link rel="manifest" href="manifest.json" />
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Scan QR Check-In</title>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scan QR Check-in</title>
 
-    <script src="https://unpkg.com/html5-qrcode"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
 
-    <style>
-      body {
-        background: #0e0c0a;
-        color: #d4af6a;
-        font-family: Arial, sans-serif;
-        text-align: center;
-      }
-      #reader {
-        width: 300px;
-        margin: 30px auto;
-      }
-      #status {
-        margin-top: 15px;
-        font-size: 14px;
-      }
-      .ok {
-        color: #4caf50;
-      }
-      .warn {
-        color: #ffc107;
-      }
-      .err {
-        color: #f44336;
-      }
-    </style>
-  </head>
+<style>
+body {
+  background:#0e0c0a;
+  color:#d4af6a;
+  font-family:Arial;
+  text-align:center;
+}
+#reader {
+  width:300px;
+  margin:30px auto;
+}
+#status {
+  font-size:18px;
+  margin-top:15px;
+}
+</style>
+</head>
 
-  <body>
-    <h2>SCAN QR TAMU</h2>
-    <p>Arahkan kamera ke QR undangan</p>
+<body>
 
-    <div id="reader"></div>
-    <p id="status">Siap scan…</p>
+<h2>SCAN QR TAMU</h2>
+<p>Arahkan kamera ke QR undangan</p>
 
-    <script>
-      /* ===============================
-   KONFIGURASI
-================================ */
-      const SHEET_URL =
-        "https://script.google.com/macros/s/AKfycbzJsKL1O01UuV6d9OaZDUt0sZ0SkRzTXFxOmqBNKSA_fEbi6Ys-RUy3A3OFpbJdsDkr/exec";
+<div id="reader"></div>
+<p id="status">Siap scan...</p>
 
-      const statusEl = document.getElementById("status");
+<script>
+const SHEET_URL = "PASTE_URL_DEPLOY_SCRIPT_DI_SINI";
+let locked = false;
 
-      /* ===============================
-   OFFLINE STORAGE
-================================ */
-      function simpanOffline(token) {
-        let data = JSON.parse(localStorage.getItem("offline_scan") || "[]");
-        data.push({
-          token: token,
-          waktu: new Date().toISOString(),
-        });
-        localStorage.setItem("offline_scan", JSON.stringify(data));
-      }
+function onScanSuccess(decodedText) {
+  if (locked) return;
+  locked = true;
 
-      /* ===============================
-   SYNC DATA OFFLINE
-================================ */
-      function syncOffline() {
-        let data = JSON.parse(localStorage.getItem("offline_scan") || "[]");
-        if (data.length === 0) return;
+  const parts = decodedText.split("|");
+  const token = parts[1];
 
-        data.forEach((item) => {
-          fetch(SHEET_URL, {
-            method: "POST",
-            mode: "no-cors",
-            body: JSON.stringify({
-              mode: "scan",
-              token: item.token,
-            }),
-          });
-        });
+  document.getElementById("status").innerText = "⏳ Mengirim data...";
 
-        localStorage.removeItem("offline_scan");
-        statusEl.innerText = "📡 Data offline tersinkron";
-        statusEl.className = "ok";
-      }
+  fetch(SHEET_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      mode: "checkin",
+      token: token
+    })
+  })
+  .then(res => res.json())
+  .then(res => {
+    if (res.status === "success") {
+      document.getElementById("status").innerText = "✅ Check-in berhasil";
+      navigator.vibrate?.(200);
+    } 
+    else if (res.status === "duplicate") {
+      document.getElementById("status").innerText = "⚠️ QR sudah digunakan";
+      navigator.vibrate?.([100,50,100]);
+    } 
+    else {
+      document.getElementById("status").innerText = "❌ Data tidak ditemukan";
+    }
+  })
+  .catch(() => {
+    document.getElementById("status").innerText = "❌ Gagal koneksi";
+  })
+  .finally(() => {
+    setTimeout(() => locked = false, 1500);
+  });
+}
 
-      window.addEventListener("online", syncOffline);
+new Html5Qrcode("reader").start(
+  { facingMode: "environment" },
+  { fps: 10, qrbox: 250 },
+  onScanSuccess
+);
+</script>
 
-      /* ===============================
-   SCAN HANDLER
-================================ */
-      function onScanSuccess(decodedText) {
-        const token = decodedText.trim();
-
-        // OFFLINE MODE
-        if (!navigator.onLine) {
-          simpanOffline(token);
-          statusEl.innerText = "📴 Offline — scan disimpan";
-          statusEl.className = "warn";
-          return;
-        }
-
-        // ONLINE MODE
-        fetch(SHEET_URL, {
-          method: "POST",
-          mode: "no-cors",
-          body: JSON.stringify({
-            mode: "scan",
-            token: token,
-          }),
-        });
-
-        statusEl.innerText = "✅ Scan diterima";
-        statusEl.className = "ok";
-      }
-
-      /* ===============================
-   INIT SCANNER
-================================ */
-      new Html5Qrcode("reader").start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
-        onScanSuccess
-      );
-    </script>
-  </body>
+</body>
 </html>
-
