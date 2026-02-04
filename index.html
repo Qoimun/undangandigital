@@ -1,93 +1,487 @@
 <!DOCTYPE html>
-<html lang="jv">
+<html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hera & Indah</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Wedding Invitation — Fulan & Fulanah</title>
+    
+    <!-- Fonts: Playfair Display (Elegan) & Poppins (Modern) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet"/>
+    
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+    <style>
+        /* --- VARIABEL & RESET --- */
+        :root {
+            --bg-dark: #0f0c0a;
+            --bg-gradient: radial-gradient(circle at 50% 0%, #231e19 0%, #0f0c0a 80%);
+            --gold-primary: #d4af6a;
+            --gold-shine: #f9e4b0;
+            --gold-dim: #8a6e3b;
+            --text-main: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --white: #ffffff;
+            --black: #000000;
+        }
 
-<style>
-body{margin:0;font-family:Poppins;background:#0e0c0a;color:#f5f2eb;text-align:center}
-section{padding:80px 20px}
-.card{background:#1a1714;max-width:360px;margin:auto;padding:30px}
-input,textarea,select{width:100%;padding:12px;margin-top:10px;background:#111;border:1px solid #d4af6a;color:#fff}
-button{margin-top:15px;padding:12px 30px;background:transparent;border:1px solid #d4af6a;color:#fff}
-#qrcode{margin-top:20px}
-</style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: var(--bg-dark);
+            background-image: var(--bg-gradient);
+            color: var(--text-main);
+            font-family: "Poppins", sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            /* 3D Perspective Context */
+            perspective: 1200px; 
+        }
+
+        /* --- DECORATIVE BACKGROUND --- */
+        .bg-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.4;
+            animation: float 10s infinite ease-in-out alternate;
+        }
+        .orb-1 { width: 300px; height: 300px; background: var(--gold-dim); top: -50px; left: -50px; }
+        .orb-2 { width: 400px; height: 400px; background: #2a221b; bottom: -100px; right: -100px; animation-delay: -5s; }
+
+        @keyframes float {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(30px, 50px); }
+        }
+
+        /* --- 3D CARD CONTAINER --- */
+        .card-container {
+            width: 100%;
+            max-width: 420px;
+            margin: 20px;
+            padding: 10px;
+            /* 3D Transform Properties */
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out; 
+        }
+
+        /* --- MAIN GLASS CARD --- */
+        .glass-card {
+            background: rgba(25, 22, 19, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(212, 175, 106, 0.15);
+            border-radius: 24px;
+            padding: 40px 30px;
+            text-align: center;
+            box-shadow: 
+                0 20px 50px rgba(0,0,0,0.6),
+                0 0 0 1px rgba(255,255,255,0.05) inset;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Golden Border Accent */
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 24px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(212,175,106,0.4), transparent, rgba(212,175,106,0.4));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        /* --- TYPOGRAPHY --- */
+        .pre-title {
+            font-family: "Cormorant Garamond", serif;
+            font-size: 1rem;
+            letter-spacing: 4px;
+            color: var(--gold-primary);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        h1 {
+            font-family: "Playfair Display", serif;
+            font-size: 2.5rem;
+            color: var(--gold-shine);
+            line-height: 1.2;
+            margin-bottom: 5px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .date-loc {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(212, 175, 106, 0.2);
+            display: inline-block;
+            padding-bottom: 20px;
+        }
+
+        .section-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--gold-dim);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .section-label::before, .section-label::after {
+            content: "";
+            width: 30px;
+            height: 1px;
+            background: var(--gold-dim);
+        }
+
+        /* --- INPUTS & FORM --- */
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .custom-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 14px 16px;
+            color: #fff;
+            font-family: "Poppins", sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            outline: none;
+        }
+
+        .custom-input:focus {
+            border-color: var(--gold-primary);
+            box-shadow: 0 0 0 4px rgba(212, 175, 106, 0.1);
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        select.custom-input {
+            appearance: none; /* Remove default arrow */
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d4af6a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 16px;
+        }
+
+        ::placeholder { color: #666; font-style: italic; }
+
+        /* --- BUTTON --- */
+        .btn-gold {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--gold-primary), var(--gold-dim));
+            color: #111;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-gold:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(212, 175, 106, 0.2);
+        }
+        
+        .btn-gold:active { transform: translateY(0); }
+
+        /* --- QR CODE SECTION (HIGH CONTRAST) --- */
+        #qr-wrapper {
+            margin-top: 40px;
+            background: #ffffff; /* Pure white background for contrast */
+            padding: 20px;
+            border-radius: 16px;
+            display: none; /* Hidden initially */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 4px solid var(--black); /* Black border accent */
+        }
+        
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .qr-title {
+            color: var(--black);
+            font-family: "Playfair Display", serif;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .qr-desc {
+            color: #444;
+            font-size: 0.8rem;
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+
+        /* Enforce Black QR on White */
+        #qrcode img {
+            display: block;
+            margin: 0 auto;
+            border-radius: 4px;
+        }
+
+        /* --- TOAST --- */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(30, 30, 30, 0.95);
+            color: var(--gold-primary);
+            padding: 12px 24px;
+            border-radius: 50px;
+            border: 1px solid var(--gold-dim);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 480px) {
+            body { align-items: flex-start; padding-top: 40px; }
+            .card-container { width: 90%; margin: 0 auto 40px auto; }
+            h1 { font-size: 2rem; }
+        }
+    </style>
 </head>
-
 <body>
 
-<section>
-<h1>Hera & Indah</h1>
-<p>23 Mei 2026 • Gawok</p>
-</section>
+    <!-- Background Elements -->
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
 
-<section>
-<h2>RSVP & Buku Tamu</h2>
-<div class="card">
-  <input id="nama" placeholder="Asma Panjenengan">
-  <select id="hadir">
-    <option value="Hadir">Inggih, rawuh</option>
-    <option value="Tidak Hadir">Mboten saged rawuh</option>
-  </select>
-  <textarea id="pesan" placeholder="Pangestu & donga"></textarea>
-  <button onclick="submitRSVP()">KIRIM</button>
-  <div id="qrcode"></div>
-</div>
-</section>
+    <!-- 3D Tilt Container -->
+    <div class="card-container" id="tiltCard">
+        <div class="glass-card">
+            
+            <!-- Header -->
+            <header>
+                <span class="pre-title">The Wedding Of</span>
+                <h1>Fulan & Fulanah</h1>
+                <div class="date-loc">
+                    23 Mei 2026 • Surakarta
+                </div>
+            </header>
 
-<script>
-const SHEET_URL = "https://script.google.com/macros/s/AKfycbyI3EEgA9H601DWrKh8q9UygS3x0G6wb4ZTQr1BUjPQtKOs1U96egU7nhIkObxlMzcYMA/exec";
+            <!-- Form Section -->
+            <main>
+                <div class="section-label">RSVP & Ucapan</div>
+                
+                <form id="rsvpForm" onsubmit="event.preventDefault(); submitRSVP();">
+                    <div class="input-group">
+                        <input type="text" id="nama" class="custom-input" placeholder="Nama Panjenengan" required autocomplete="off">
+                    </div>
 
-function token(){
-  return Math.random().toString(36).substring(2,10)+Date.now().toString(36);
-}
+                    <div class="input-group">
+                        <select id="hadir" class="custom-input">
+                            <option value="Hadir">Inggih, badhe rawuh</option>
+                            <option value="Tidak Hadir">Mboten saged rawuh</option>
+                        </select>
+                    </div>
 
-function showQR(nama,token){
-  document.getElementById("qrcode").innerHTML="";
-  new QRCode(document.getElementById("qrcode"),{
-    text:nama+"|"+token,
-    width:180,height:180,
-    colorDark:"#d4af6a",colorLight:"#000"
-  });
-}
+                    <div class="input-group">
+                        <textarea id="pesan" class="custom-input" rows="3" placeholder="Pesan & Pangestu..."></textarea>
+                    </div>
 
-function submitRSVP(){
-  const nama=namaEl.value.trim();
-  if(!nama){alert("Isi asma panjenengan");return;}
-  const hadir=hadirEl.value;
-  const pesan=pesanEl.value;
-  const t=token();
+                    <button type="submit" class="btn-gold" id="btnSubmit">
+                        <span>Kirim Konfirmasi</span>
+                    </button>
+                </form>
+            </main>
 
-  localStorage.setItem("qrToken",t);
-  localStorage.setItem("qrNama",nama);
+            <!-- QR Code Section (Hitam Putih High Contrast) -->
+            <div id="qr-wrapper">
+                <h3 class="qr-title">Tiket Digital</h3>
+                <div id="qrcode"></div>
+                <p class="qr-desc">
+                    Silakan tunjukkan QR Code ini kepada penerima tamu saat kedatangan.
+                </p>
+            </div>
 
-  const p=new URLSearchParams();
-  p.append("mode","rsvp");
-  p.append("nama",nama);
-  p.append("hadir",hadir);
-  p.append("pesan",pesan);
-  p.append("token",t);
+        </div>
+    </div>
 
-  fetch(SHEET_URL,{method:"POST",body:p})
-    .then(()=>{showQR(nama,t);alert("RSVP tersimpan");})
-    .catch(()=>alert("Gagal simpan"));
-}
+    <!-- Custom Toast Notification -->
+    <div id="toast" class="toast">
+        <span>✅</span> <span id="toast-msg">Pesan terkirim!</span>
+    </div>
 
-const namaEl=document.getElementById("nama");
-const hadirEl=document.getElementById("hadir");
-const pesanEl=document.getElementById("pesan");
+    <script>
+        // --- KONFIGURASI ---
+        const SHEET_URL = "https://script.google.com/macros/s/AKfycbz1pohlmX41ox6VrUvWHeW2J0LEk7x8XhZSEgBIgUlQyZven-BxVAL0sioStbb4NwsHaQ/exec";
 
-window.onload=()=>{
-  const t=localStorage.getItem("qrToken");
-  const n=localStorage.getItem("qrNama");
-  if(t&&n) showQR(n,t);
-};
-</script>
+        // --- LOGIC GENERATE TOKEN ---
+        function generateToken() {
+            return "TAMU-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).substr(2, 5).toUpperCase();
+        }
 
+        // --- TAMPILKAN QR (HITAM & PUTIH) ---
+        function renderQR(token) {
+            const wrapper = document.getElementById('qr-wrapper');
+            const qrContainer = document.getElementById('qrcode');
+            
+            qrContainer.innerHTML = ""; // Bersihkan QR lama
+            
+            // Generate QR Hitam Putih Sempurna
+            new QRCode(qrContainer, {
+                text: token,
+                width: 180,
+                height: 180,
+                colorDark : "#000000", // Hitam Pekat
+                colorLight : "#ffffff", // Putih Pekat
+                correctLevel : QRCode.CorrectLevel.H
+            });
+
+            wrapper.style.display = 'block'; // Tampilkan
+            
+            // Scroll halus ke bawah agar terlihat
+            setTimeout(() => {
+                wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
+
+        // --- SUBMIT FORM ---
+        function submitRSVP() {
+            const nama = document.getElementById('nama').value.trim();
+            const hadir = document.getElementById('hadir').value;
+            const pesan = document.getElementById('pesan').value;
+            const btn = document.getElementById('btnSubmit');
+            const btnText = btn.querySelector('span');
+
+            if (!nama) {
+                showToast("Mangga tulis asma panjenengan kados wingi", true);
+                return;
+            }
+
+            // Efek Loading
+            btn.disabled = true;
+            btn.style.opacity = "0.7";
+            btnText.innerText = "Nyuwun sewengku...";
+
+            // Cek token lokal
+            let token = localStorage.getItem("wedding_token_v2");
+            if (!token) {
+                token = generateToken();
+                localStorage.setItem("wedding_token_v2", token);
+            }
+
+            // Kirim ke Google Sheets
+            fetch(SHEET_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ mode: "rsvp", nama, hadir, pesan, token }),
+            })
+            .then(() => {
+                renderQR(token);
+                showToast("Matur nuwun! Sampun katerima.");
+                
+                // Ubah tombol jadi selesai
+                btnText.innerText = "Sampun Kirim";
+                btn.style.background = "#444";
+                btn.style.color = "#888";
+            })
+            .catch(err => {
+                console.error(err);
+                showToast("Gagal kirim, tapi QR tetap dipun tampilaken.", true);
+                renderQR(token); // Fallback tampilkan QR walaupun error
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.style.opacity = "1";
+            });
+        }
+
+        // --- TOAST NOTIFICATION ---
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-msg');
+            
+            toastMsg.innerText = msg;
+            toast.style.borderColor = isError ? '#ff4d4d' : 'var(--gold-dim)';
+            toast.querySelector('span:first-child').innerText = isError ? '⚠️' : '✅';
+            
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // --- 3D TILT EFFECT INTERAKTIF ---
+        const card = document.getElementById('tiltCard');
+        
+        // Hanya aktifkan di Desktop
+        if (window.matchMedia("(min-width: 768px)").matches) {
+            document.addEventListener('mousemove', (e) => {
+                const xAxis = (window.innerWidth / 2 - e.pageX) / 40; // Sensitivitas X
+                const yAxis = (window.innerHeight / 2 - e.pageY) / 40; // Sensitivitas Y
+                
+                // Terapkan rotasi
+                card.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+            });
+
+            // Reset saat mouse keluar jendela (opsional, agar tidak miring terus)
+            document.addEventListener('mouseleave', () => {
+                card.style.transform = `rotateY(0deg) rotateX(0deg)`;
+            });
+        }
+
+        // --- AUTO LOAD ---
+        window.onload = () => {
+            const token = localStorage.getItem("wedding_token_v2");
+            if (token) {
+                renderQR(token);
+                // Ubah tombol awal jadi selesai
+                const btn = document.getElementById('btnSubmit');
+                const btnText = btn.querySelector('span');
+                btn.disabled = true;
+                btnText.innerText = "Sampun Kirim";
+                btn.style.background = "#444";
+                btn.style.color = "#888";
+            }
+        };
+    </script>
 </body>
 </html>
-
