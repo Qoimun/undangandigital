@@ -41,11 +41,12 @@ button {
   text-align:center;
 }
 
+/* =================== TABEL =================== */
 table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 15px;
-  table-layout: fixed; /* Kolom rapi */
+  table-layout: auto; /* otomatis menyesuaikan konten */
 }
 
 th, td {
@@ -53,8 +54,15 @@ th, td {
   padding: 10px 8px;
   font-size: 0.9rem;
   text-align: left;
-  word-wrap: break-word; /* teks panjang wrap */
+  vertical-align: top; /* agar header dan data sejajar */
+  word-break: break-word; /* wrap teks panjang */
 }
+
+/* Lebar kolom */
+th:nth-child(1), td:nth-child(1) { width: 25%; }
+th:nth-child(2), td:nth-child(2) { width: 20%; }
+th:nth-child(3), td:nth-child(3) { width: 20%; }
+th:nth-child(4), td:nth-child(4) { width: 35%; }
 
 th {
   background-color: #1a1613;
