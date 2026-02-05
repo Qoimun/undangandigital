@@ -358,11 +358,12 @@ setInterval(() => {
 }, 1000);
 
 /* --- LOGIKA RSVP (REVISED & FIXED) --- */
+/* --- LOGIKA RSVP (FINAL FIX) --- */
 function kirim() {
   const nama = document.getElementById('nama');
   const hadir = document.getElementById('hadir');
   const pesan = document.getElementById('pesan');
-  const alamat = document.getElementById('alamat'); // TAMBAHAN ALAMAT
+  const alamat = document.getElementById('alamat'); 
   const btn = document.getElementById('btn-submit');
 
   // 1. Validasi
@@ -384,31 +385,30 @@ function kirim() {
   
   console.log("Mengirim data...");
 
-  // 4. Fetch Data (Menggunakan mode no-cors)
+  // 4. Siapkan Data
   const params = new URLSearchParams();
   params.append("mode", "rsvp");
   params.append("nama", nama.value);
   params.append("hadir", hadir.value);
   params.append("pesan", pesan.value);
-  params.append("alamat", alamat.value || ""); // TAMBAHAN ALAMAT
+  params.append("alamat", alamat.value || "");
   params.append("token", t);
 
+  // 5. Fetch Data (SOLUSI ANTI CORS)
   fetch(SCRIPT_URL, {
     method: "POST",
     body: params,
-    mode: 'no-cors', // KUNCI SOLUSI: Anti CORS Error
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
-    }
+    mode: 'no-cors' 
   })
   .then(() => {
-    console.log("Data terkirim.");
+    console.log("Fetch selesai (Data dikirim, respons tidak dibaca karena no-cors)");
     
+    // Beri jeda sedikit biar user merasa prosesnya terjadi
     setTimeout(() => {
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-paper-plane"></i> Kirim Konfirmasi';
       
-      // Ganti tampilan ke sukses
+      // Tampilkan Sukses
       document.getElementById('rsvp-form-container').classList.add('hidden');
       document.getElementById('rsvp-success').classList.remove('hidden');
       
@@ -425,10 +425,10 @@ function kirim() {
       });
       
       showToast("Konfirmasi Berhasil!");
-    }, 1000);
+    }, 1500);
   })
   .catch((err) => {
-    console.error("Error:", err);
+    console.error("Network Error:", err);
     btn.disabled = false;
     btn.innerHTML = '<i class="fas fa-paper-plane"></i> Kirim Konfirmasi';
     showToast("Gagal mengirim data. Cek koneksi internet.");
@@ -516,3 +516,4 @@ initParticles(); animateParticles();
 </script>
 </body>
 </html>
+
