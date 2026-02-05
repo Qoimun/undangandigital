@@ -49,13 +49,14 @@ table {
 th, td {
   border-bottom:1px solid #333;
   padding:8px;
-  font-size:0.85rem;
+  font-size:0.9rem;
 }
 th { color:#fff; }
 
 .hidden { display:none; }
-.success { color:#00ff9c; }
-.warn { color:#ffcc00; }
+.success { color:#00ff9c; } /* Hadir */
+.warn { color:#ffcc00; }    /* Belum Hadir */
+.danger { color:#ff4c4c; }  /* Tidak Hadir */
 
 @media(max-width:600px){
   .stats { flex-direction:column; }
@@ -98,7 +99,8 @@ th { color:#fff; }
   <select id="filter" onchange="render()">
     <option value="all">Semua</option>
     <option value="HADIR">Hadir</option>
-    <option value="">Belum Hadir</option>
+    <option value="BELUM">Belum Hadir</option>
+    <option value="TIDAK">Tidak Hadir</option>
   </select>
 
   <button onclick="exportExcel()">⬇ Export Excel</button>
@@ -118,17 +120,13 @@ th { color:#fff; }
 </div>
 
 <script>
-/* =============================
-   KONFIGURASI
-============================= */
+/* ============================= KONFIGURASI ============================= */
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw8hlNUj25__RM2eKvzSA6lgfbXRsiOmR6aUdvCaRTDF9MH6XGek02EAMyqvMYOOt-6eQ/exec";
 const PIN_BENAR = "230526"; // GANTI PIN DI SINI
 
 let rows = [];
 
-/* =============================
-   LOGIN
-============================= */
+/* ============================= LOGIN ============================= */
 function login(){
   const pin = document.getElementById("pin").value;
   if(pin === PIN_BENAR){
@@ -141,56 +139,54 @@ function login(){
   }
 }
 
-/* =============================
-   LOAD DATA
-============================= */
+/* ============================= LOAD DATA ============================= */
 function loadData(){
   fetch(SCRIPT_URL + "?mode=dashboard")
     .then(res=>res.json())
     .then(data=>{
-      rows = data;
+      // Normalisasi status
+      rows = data.map(r=>{
+        let status = r.status ? r.status.toUpperCase() : "BELUM";
+        if(status !== "HADIR" && status !== "BELUM") status = "TIDAK";
+        return {...r, status};
+      });
       updateStats();
       render();
     });
 }
 
-/* =============================
-   STATS
-============================= */
+/* ============================= STATS ============================= */
 function updateStats(){
   const total = rows.length;
   const hadir = rows.filter(r=>r.status==="HADIR").length;
+  const belum = rows.filter(r=>r.status==="BELUM").length;
   document.getElementById("total").innerText = total;
   document.getElementById("hadir").innerText = hadir;
-  document.getElementById("belum").innerText = total - hadir;
+  document.getElementById("belum").innerText = belum;
 }
 
-/* =============================
-   RENDER TABLE
-============================= */
+/* ============================= RENDER TABLE ============================= */
 function render(){
   const tbody = document.getElementById("data");
-  tbody.innerHTML="";
   const q = document.getElementById("search").value.toLowerCase();
   const f = document.getElementById("filter").value;
 
-  rows.filter(r=>{
-    return r.nama.toLowerCase().includes(q) &&
-      (f==="all" || r.status===f);
-  }).forEach(r=>{
-    tbody.innerHTML += `
-      <tr>
-        <td>${r.nama}</td>
-        <td>${r.kehadiran}</td>
-        <td class="${r.status==='HADIR'?'success':'warn'}">${r.status||'-'}</td>
-        <td>${r.waktu||''}</td>
-      </tr>`;
-  });
+  tbody.innerHTML = rows.filter(r=>{
+    const matchFilter = (f==="all" || r.status===f);
+    const matchSearch = r.nama.toLowerCase().includes(q);
+    return matchFilter && matchSearch;
+  }).map(r=>{
+    let cls = r.status==='HADIR' ? 'success' : (r.status==='BELUM' ? 'warn' : 'danger');
+    return `<tr>
+      <td>${r.nama}</td>
+      <td>${r.kehadiran}</td>
+      <td class="${cls}">${r.status}</td>
+      <td>${r.waktu||''}</td>
+    </tr>`;
+  }).join('');
 }
 
-/* =============================
-   EXPORT
-============================= */
+/* ============================= EXPORT ============================= */
 function exportExcel(){
   window.open(SCRIPT_URL + "?mode=export");
 }
@@ -198,4 +194,3 @@ function exportExcel(){
 
 </body>
 </html>
-
