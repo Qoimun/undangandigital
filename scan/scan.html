@@ -2,17 +2,17 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Scan QR Offline Mode</title>
+<title>Scan QR Pernikahan</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="manifest" href="./manifest.json"> <!-- Link manifest -->
+<link rel="manifest" href="manifest.json">
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
-body{
+body {
   background:#0f0c0a;
   color:#d4af6a;
-  font-family:Arial;
+  font-family:Arial, sans-serif;
   text-align:center;
   padding:20px;
 }
@@ -22,36 +22,36 @@ body{
   border:3px solid #d4af6a;
   border-radius:14px;
 }
-#badge{
+#badge, #status{
   margin-top:20px;
   padding:14px;
   font-size:1.1rem;
   border-radius:10px;
-  display:none;
+  display:block;
 }
-/* Kelas warna sesuai CSS asli Anda */
 .success{background:#1e7f43;color:#fff}
 .duplicate{background:#a67c00;color:#000}
 .error{background:#7f1e1e;color:#fff}
 .offline{background:#444;color:#fff}
+.status.ok{background:#1e7f43;color:#fff}
+.status.warn{background:#a67c00;color:#000}
+.status.err{background:#7f1e1e;color:#fff}
 </style>
 </head>
-
 <body>
 
 <h2>SCAN QR TAMU</h2>
 <p id="netStatus">🔵 ONLINE</p>
 
 <div id="reader"></div>
-<!-- Element badge ini yang akan diakses oleh JS -->
 <div id="badge"></div>
+<div id="status"></div>
 
 <!-- SOUND -->
 <audio id="sukses" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="warning" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 <audio id="error" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"></audio>
 
-<!-- PANGGIL SCAN.JS DISINI -->
 <script src="scan.js"></script>
 
 </body>
