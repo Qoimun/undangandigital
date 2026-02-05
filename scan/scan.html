@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>Scan QR Offline Mode</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="./manifest.json"> <!-- Link manifest -->
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 
@@ -28,6 +29,7 @@ body{
   border-radius:10px;
   display:none;
 }
+/* Kelas warna sesuai CSS asli Anda */
 .success{background:#1e7f43;color:#fff}
 .duplicate{background:#a67c00;color:#000}
 .error{background:#7f1e1e;color:#fff}
@@ -41,6 +43,7 @@ body{
 <p id="netStatus">🔵 ONLINE</p>
 
 <div id="reader"></div>
+<!-- Element badge ini yang akan diakses oleh JS -->
 <div id="badge"></div>
 
 <!-- SOUND -->
@@ -48,138 +51,8 @@ body{
 <audio id="warning" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 <audio id="error" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"></audio>
 
-<script>
-/* =========================
-   CONFIG
-========================= */
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz9kROyde8G2F-JKsW4M80K9kKo_ov0uASdkHQlHqpBlxPqKYiugzsuJPbqhXip30MJpQ/exec";
-
-let locked = false;
-
-/* =========================
-   LOCAL STORAGE
-========================= */
-const scannedKey = "scannedTokens";
-const queueKey = "offlineQueue";
-
-function getStore(key){
-  return JSON.parse(localStorage.getItem(key) || "[]");
-}
-function setStore(key,val){
-  localStorage.setItem(key,JSON.stringify(val));
-}
-
-/* =========================
-   UI + FX
-========================= */
-function badge(text,type){
-  const b=document.getElementById("badge");
-  b.innerText=text;
-  b.className=type;
-  b.style.display="block";
-}
-function vibrate(ms){navigator.vibrate?.(ms)}
-function sound(id){document.getElementById(id).play()}
-
-/* =========================
-   NETWORK STATUS
-========================= */
-function updateNet(){
-  document.getElementById("netStatus").innerText =
-    navigator.onLine ? "🔵 ONLINE" : "🔴 OFFLINE";
-}
-window.addEventListener("online",syncQueue);
-window.addEventListener("online",updateNet);
-window.addEventListener("offline",updateNet);
-updateNet();
-
-/* =========================
-   SYNC OFFLINE QUEUE
-========================= */
-function syncQueue(){
-  if(!navigator.onLine) return;
-  const queue = getStore(queueKey);
-  if(queue.length===0) return;
-
-  queue.forEach(token=>{
-    sendToServer(token,true);
-  });
-
-  setStore(queueKey,[]);
-}
-
-/* =========================
-   SEND CHECKIN
-========================= */
-function sendToServer(token, silent=false){
-  fetch(SCRIPT_URL,{
-    method:"POST",
-    body:new URLSearchParams({
-      mode:"checkin",
-      token
-    })
-  })
-  .then(r=>r.text())
-  .then(res=>{
-    if(!silent){
-      if(res==="success"){
-        sound("sukses"); vibrate(150);
-        badge("✔ HADIR","success");
-      }else if(res==="duplicate"){
-        sound("warning"); vibrate(400);
-        badge("⚠ SUDAH CHECK-IN","duplicate");
-      }else{
-        sound("error"); vibrate([200,100,200]);
-        badge("❌ TIDAK DITEMUKAN","error");
-      }
-    }
-  })
-  .catch(()=>{});
-}
-
-/* =========================
-   SCAN HANDLER
-========================= */
-function onScanSuccess(token){
-  if(locked) return;
-  locked=true;
-
-  const scanned = getStore(scannedKey);
-  if(scanned.includes(token)){
-    sound("warning"); vibrate(400);
-    badge("⚠ DUPLIKAT (LOKAL)","duplicate");
-    locked=false;
-    return;
-  }
-
-  scanned.push(token);
-  setStore(scannedKey,scanned);
-
-  if(navigator.onLine){
-    sendToServer(token);
-  }else{
-    const q = getStore(queueKey);
-    q.push(token);
-    setStore(queueKey,q);
-    sound("sukses"); vibrate(150);
-    badge("✔ HADIR (OFFLINE)","offline");
-  }
-
-  setTimeout(()=>locked=false,2500);
-}
-
-/* =========================
-   INIT SCANNER
-========================= */
-new Html5Qrcode("reader").start(
-  {facingMode:"environment"},
-  {fps:10,qrbox:250},
-  onScanSuccess
-);
-</script>
+<!-- PANGGIL SCAN.JS DISINI -->
+<script src="scan.js"></script>
 
 </body>
 </html>
-
-
-
