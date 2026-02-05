@@ -2,144 +2,178 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Scan QR Check-in</title>
+<title>Scan QR Offline Mode</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
-body {
+body{
   background:#0f0c0a;
   color:#d4af6a;
-  font-family:Arial, sans-serif;
+  font-family:Arial;
   text-align:center;
   padding:20px;
 }
-h2 { margin-bottom:5px; }
-#reader {
+#reader{
   width:320px;
   margin:20px auto;
   border:3px solid #d4af6a;
   border-radius:14px;
 }
-#badge {
+#badge{
   margin-top:20px;
   padding:14px;
   font-size:1.1rem;
   border-radius:10px;
   display:none;
 }
-.success { background:#1e7f43; color:#fff; }
-.duplicate { background:#a67c00; color:#000; }
-.error { background:#7f1e1e; color:#fff; }
+.success{background:#1e7f43;color:#fff}
+.duplicate{background:#a67c00;color:#000}
+.error{background:#7f1e1e;color:#fff}
+.offline{background:#444;color:#fff}
 </style>
 </head>
 
 <body>
 
 <h2>SCAN QR TAMU</h2>
-<p>Arahkan kamera ke QR undangan</p>
+<p id="netStatus">🔵 ONLINE</p>
 
 <div id="reader"></div>
 <div id="badge"></div>
 
 <!-- SOUND -->
-<audio id="soundSuccess" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
-<audio id="soundDuplicate" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
-<audio id="soundError" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"></audio>
+<audio id="sukses" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+<audio id="warning" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+<audio id="error" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"></audio>
 
 <script>
-/* =============================
-   KONFIGURASI
-============================= */
+/* =========================
+   CONFIG
+========================= */
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw8hlNUj25__RM2eKvzSA6lgfbXRsiOmR6aUdvCaRTDF9MH6XGek02EAMyqvMYOOt-6eQ/exec";
 
 let locked = false;
 
-/* =============================
-   BADGE UI
-============================= */
-function showBadge(text, type){
-  const b = document.getElementById("badge");
-  b.className = type;
-  b.innerText = text;
-  b.style.display = "block";
+/* =========================
+   LOCAL STORAGE
+========================= */
+const scannedKey = "scannedTokens";
+const queueKey = "offlineQueue";
+
+function getStore(key){
+  return JSON.parse(localStorage.getItem(key) || "[]");
+}
+function setStore(key,val){
+  localStorage.setItem(key,JSON.stringify(val));
 }
 
-/* =============================
-   SOUND + VIBRATE
-============================= */
-function playSuccess(){
-  document.getElementById("soundSuccess").play();
-  navigator.vibrate?.(150);
+/* =========================
+   UI + FX
+========================= */
+function badge(text,type){
+  const b=document.getElementById("badge");
+  b.innerText=text;
+  b.className=type;
+  b.style.display="block";
 }
+function vibrate(ms){navigator.vibrate?.(ms)}
+function sound(id){document.getElementById(id).play()}
 
-function playDuplicate(){
-  document.getElementById("soundDuplicate").play();
-  navigator.vibrate?.(400);
+/* =========================
+   NETWORK STATUS
+========================= */
+function updateNet(){
+  document.getElementById("netStatus").innerText =
+    navigator.onLine ? "🔵 ONLINE" : "🔴 OFFLINE";
 }
+window.addEventListener("online",syncQueue);
+window.addEventListener("online",updateNet);
+window.addEventListener("offline",updateNet);
+updateNet();
 
-function playError(){
-  document.getElementById("soundError").play();
-  navigator.vibrate?.([200,100,200]);
-}
+/* =========================
+   SYNC OFFLINE QUEUE
+========================= */
+function syncQueue(){
+  if(!navigator.onLine) return;
+  const queue = getStore(queueKey);
+  if(queue.length===0) return;
 
-/* =============================
-   CHECK-IN
-============================= */
-function sendCheckin(token){
-  if(locked) return;
-  locked = true;
-
-  showBadge("⏳ Memproses...", "duplicate");
-
-  const body = new URLSearchParams({
-    mode: "checkin",
-    token: token
+  queue.forEach(token=>{
+    sendToServer(token,true);
   });
 
-  fetch(SCRIPT_URL, {
-    method: "POST",
-    body
+  setStore(queueKey,[]);
+}
+
+/* =========================
+   SEND CHECKIN
+========================= */
+function sendToServer(token, silent=false){
+  fetch(SCRIPT_URL,{
+    method:"POST",
+    body:new URLSearchParams({
+      mode:"checkin",
+      token
+    })
   })
-  .then(res => res.text())
-  .then(res => {
-    if(res === "success"){
-      playSuccess();
-      showBadge("✔ HADIR", "success");
-    } 
-    else if(res === "duplicate"){
-      playDuplicate();
-      showBadge("⚠ SUDAH CHECK-IN", "duplicate");
-    } 
-    else {
-      playError();
-      showBadge("❌ DATA TIDAK DITEMUKAN", "error");
+  .then(r=>r.text())
+  .then(res=>{
+    if(!silent){
+      if(res==="success"){
+        sound("sukses"); vibrate(150);
+        badge("✔ HADIR","success");
+      }else if(res==="duplicate"){
+        sound("warning"); vibrate(400);
+        badge("⚠ SUDAH CHECK-IN","duplicate");
+      }else{
+        sound("error"); vibrate([200,100,200]);
+        badge("❌ TIDAK DITEMUKAN","error");
+      }
     }
   })
-  .catch(() => {
-    playError();
-    showBadge("❌ GAGAL KONEKSI", "error");
-  })
-  .finally(() => {
-    setTimeout(() => locked = false, 2500);
-  });
+  .catch(()=>{});
 }
 
-/* =============================
-   SCAN SUCCESS
-============================= */
-function onScanSuccess(text){
-  sendCheckin(text.trim());
+/* =========================
+   SCAN HANDLER
+========================= */
+function onScanSuccess(token){
+  if(locked) return;
+  locked=true;
+
+  const scanned = getStore(scannedKey);
+  if(scanned.includes(token)){
+    sound("warning"); vibrate(400);
+    badge("⚠ DUPLIKAT (LOKAL)","duplicate");
+    locked=false;
+    return;
+  }
+
+  scanned.push(token);
+  setStore(scannedKey,scanned);
+
+  if(navigator.onLine){
+    sendToServer(token);
+  }else{
+    const q = getStore(queueKey);
+    q.push(token);
+    setStore(queueKey,q);
+    sound("sukses"); vibrate(150);
+    badge("✔ HADIR (OFFLINE)","offline");
+  }
+
+  setTimeout(()=>locked=false,2500);
 }
 
-/* =============================
+/* =========================
    INIT SCANNER
-============================= */
-const scanner = new Html5Qrcode("reader");
-scanner.start(
-  { facingMode:"environment" },
-  { fps:10, qrbox:250 },
+========================= */
+new Html5Qrcode("reader").start(
+  {facingMode:"environment"},
+  {fps:10,qrbox:250},
   onScanSuccess
 );
 </script>
