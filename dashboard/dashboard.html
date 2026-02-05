@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard Panitia — Wedding</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  background:#0f0c0a;
+  color:#d4af6a;
+  font-family:Arial, sans-serif;
+  padding:20px;
+}
+h1 { text-align:center; }
+
+input, button, select {
+  padding:10px;
+  border-radius:6px;
+  border:none;
+  margin:5px;
+}
+
+button {
+  background:#d4af6a;
+  color:#000;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.stats {
+  display:flex;
+  justify-content:space-around;
+  margin:20px 0;
+}
+.card {
+  background:#1a1613;
+  padding:15px;
+  border-radius:10px;
+  width:30%;
+  text-align:center;
+}
+
+table {
+  width:100%;
+  border-collapse:collapse;
+  margin-top:15px;
+}
+th, td {
+  border-bottom:1px solid #333;
+  padding:8px;
+  font-size:0.85rem;
+}
+th { color:#fff; }
+
+.hidden { display:none; }
+.success { color:#00ff9c; }
+.warn { color:#ffcc00; }
+
+@media(max-width:600px){
+  .stats { flex-direction:column; }
+  .card { width:100%; margin-bottom:10px; }
+}
+</style>
+</head>
+
+<body>
+
+<h1>📊 Dashboard Panitia</h1>
+
+<!-- LOGIN -->
+<div id="login">
+  <p>Masukkan PIN Panitia</p>
+  <input type="password" id="pin" placeholder="PIN">
+  <button onclick="login()">Masuk</button>
+  <p id="loginMsg"></p>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="hidden">
+
+  <div class="stats">
+    <div class="card">
+      <h2 id="total">0</h2>
+      <p>Total RSVP</p>
+    </div>
+    <div class="card">
+      <h2 id="hadir">0</h2>
+      <p>Hadir</p>
+    </div>
+    <div class="card">
+      <h2 id="belum">0</h2>
+      <p>Belum Hadir</p>
+    </div>
+  </div>
+
+  <input type="text" id="search" placeholder="Cari nama..." onkeyup="render()">
+  <select id="filter" onchange="render()">
+    <option value="all">Semua</option>
+    <option value="HADIR">Hadir</option>
+    <option value="">Belum Hadir</option>
+  </select>
+
+  <button onclick="exportExcel()">⬇ Export Excel</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Nama</th>
+        <th>Kehadiran</th>
+        <th>Status</th>
+        <th>Waktu</th>
+      </tr>
+    </thead>
+    <tbody id="data"></tbody>
+  </table>
+
+</div>
+
+<script>
+/* =============================
+   KONFIGURASI
+============================= */
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyI3EEgA9H601DWrKh8q9UygS3x0G6wb4ZTQr1BUjPQtKOs1U96egU7nhIkObxlMzcYMA/exec";
+const PIN_BENAR = "230526"; // GANTI PIN DI SINI
+
+let rows = [];
+
+/* =============================
+   LOGIN
+============================= */
+function login(){
+  const pin = document.getElementById("pin").value;
+  if(pin === PIN_BENAR){
+    document.getElementById("login").style.display="none";
+    document.getElementById("dashboard").classList.remove("hidden");
+    loadData();
+    setInterval(loadData, 5000); // realtime refresh
+  } else {
+    document.getElementById("loginMsg").innerText="❌ PIN salah";
+  }
+}
+
+/* =============================
+   LOAD DATA
+============================= */
+function loadData(){
+  fetch(SCRIPT_URL + "?mode=dashboard")
+    .then(res=>res.json())
+    .then(data=>{
+      rows = data;
+      updateStats();
+      render();
+    });
+}
+
+/* =============================
+   STATS
+============================= */
+function updateStats(){
+  const total = rows.length;
+  const hadir = rows.filter(r=>r.status==="HADIR").length;
+  document.getElementById("total").innerText = total;
+  document.getElementById("hadir").innerText = hadir;
+  document.getElementById("belum").innerText = total - hadir;
+}
+
+/* =============================
+   RENDER TABLE
+============================= */
+function render(){
+  const tbody = document.getElementById("data");
+  tbody.innerHTML="";
+  const q = document.getElementById("search").value.toLowerCase();
+  const f = document.getElementById("filter").value;
+
+  rows.filter(r=>{
+    return r.nama.toLowerCase().includes(q) &&
+      (f==="all" || r.status===f);
+  }).forEach(r=>{
+    tbody.innerHTML += `
+      <tr>
+        <td>${r.nama}</td>
+        <td>${r.kehadiran}</td>
+        <td class="${r.status==='HADIR'?'success':'warn'}">${r.status||'-'}</td>
+        <td>${r.waktu||''}</td>
+      </tr>`;
+  });
+}
+
+/* =============================
+   EXPORT
+============================= */
+function exportExcel(){
+  window.open(SCRIPT_URL + "?mode=export");
+}
+</script>
+
+</body>
+</html>
