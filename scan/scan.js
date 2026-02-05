@@ -1,143 +1,129 @@
-const SHEET_URL = "https://script.google.com/macros/s/AKfycbz9kROyde8G2F-JKsW4M80K9kKo_ov0uASdkHQlHqpBlxPqKYiugzsuJPbqhXip30MJpQ/exec";
+/* =========================
+   CONFIG
+========================= */
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz9kROyde8G2F-JKsW4M80K9kKo_ov0uASdkHQlHqpBlxPqKYiugzsuJPbqhXip30MJpQ/exec";
+const scannedKey = "scannedTokens";
+const offlineKey = "offlineQueue";
 
-// Ambil elemen HTML sesuai ID di scan.html
+let locked = false;
+
 const badgeBox = document.getElementById("badge");
+const statusBox = document.getElementById("status");
 const netStatus = document.getElementById("netStatus");
 
 /* =========================
-   FUNGSI UI & SOUND
+   LOCAL STORAGE
 ========================= */
-function badge(text, type) {
-  badgeBox.innerText = text;
-  badgeBox.className = type; // Menggunakan class dari CSS (success, duplicate, error)
-  badgeBox.style.display = "block";
+function getStore(key){ return JSON.parse(localStorage.getItem(key) || "[]"); }
+function setStore(key,val){ localStorage.setItem(key,JSON.stringify(val)); }
+
+/* =========================
+   UI + SOUND + VIBRATE
+========================= */
+function showBadge(text,type){ badgeBox.innerText=text; badgeBox.className=type; }
+function showStatus(text,type){ statusBox.innerText=text; statusBox.className=type; }
+function playSound(id){ const audio=document.getElementById(id); if(audio){ audio.currentTime=0; audio.play(); } }
+function vibrate(ms){ navigator.vibrate?.(ms); }
+
+/* =========================
+   NETWORK STATUS
+========================= */
+function updateNet(){ netStatus.innerText = navigator.onLine ? "🔵 ONLINE" : "🔴 OFFLINE"; }
+window.addEventListener("online",()=>{ updateNet(); syncOfflineQueue(); });
+window.addEventListener("offline", updateNet);
+updateNet();
+
+/* =========================
+   SYNC OFFLINE QUEUE
+========================= */
+async function syncOfflineQueue(){
+  if(!navigator.onLine) return;
+  const queue = getStore(offlineKey);
+  if(queue.length===0) return;
+
+  for(let token of queue){
+    try{
+      const res = await fetch(SCRIPT_URL,{
+        method:"POST",
+        body: new URLSearchParams({ mode:"checkin", token })
+      });
+      await res.text();
+    }catch(e){ console.error("Gagal sync token:", token); }
+  }
+
+  setStore(offlineKey,[]);
+  showStatus("📡 Data Offline Tersinkron!", "status ok");
 }
 
-function playSound(type) {
-  const audio = document.getElementById(type);
-  if(audio) {
-    audio.currentTime = 0;
-    audio.play();
+/* =========================
+   KIRIM SCAN KE SERVER
+========================= */
+async function sendScan(token){
+  try{
+    const res = await fetch(SCRIPT_URL,{
+      method:"POST",
+      body: new URLSearchParams({ mode:"checkin", token })
+    });
+    const result = await res.text();
+
+    if(result==="success"){ showBadge("✔ HADIR","success"); showStatus("✔ HADIR (Berhasil)","status ok"); playSound("sukses"); vibrate(150); }
+    else if(result==="duplicate"){ showBadge("⚠ SUDAH CHECK-IN","duplicate"); showStatus("⚠ SUDAH CHECK-IN (Double)","status warn"); playSound("warning"); vibrate(400); }
+    else{ showBadge("❌ TIDAK DITEMUKAN","error"); showStatus("❌ TIDAK DITEMUKAN","status err"); playSound("error"); vibrate([200,100,200]); }
+  }catch(err){
+    console.error("Error Scan:", err);
+    showBadge("❌ OFFLINE","offline");
+    showStatus("📴 Offline — Scan Disimpan","status warn");
+    saveOffline(token);
   }
 }
 
 /* =========================
    SIMPAN OFFLINE
 ========================= */
-function simpanOffline(token) {
-  let data = JSON.parse(localStorage.getItem("offline_scan") || "[]");
-  // Cek duplikat di lokal agar tidak spam saat offline
-  if (!data.some(item => item.token === token)) {
-    data.push({ token, waktu: new Date().toISOString() });
-    localStorage.setItem("offline_scan", JSON.stringify(data));
-    badge("📴 Offline — Scan Disimpan", "offline");
+function saveOffline(token){
+  const queue = getStore(offlineKey);
+  if(!queue.includes(token)){
+    queue.push(token);
+    setStore(offlineKey,queue);
+    showBadge("✔ HADIR (OFFLINE)","offline");
+    playSound("sukses");
+    vibrate(150);
+  }else{
+    showBadge("⚠ DUPLIKAT (OFFLINE)","duplicate");
     playSound("warning");
-  } else {
-    badge("⚠ QR ini sudah discan sebelumnya (Lokal)", "duplicate");
-    playSound("warning");
+    vibrate(400);
   }
 }
 
 /* =========================
-   SYNC DATA OFFLINE KE SERVER
+   HANDLER SCAN
 ========================= */
-async function syncOffline() {
-  let data = JSON.parse(localStorage.getItem("offline_scan") || "[]");
-  if (data.length === 0) return;
+async function onScanSuccess(token){
+  if(locked) return;
+  locked=true;
 
-  // Tampilkan status sedang sinkron
-  badge("📡 Menyinkronkan data...", "offline");
-
-  for (let i = 0; i < data.length; i++) {
-    const item = data[i];
-    try {
-      const res = await fetch(SHEET_URL, {
-        method: "POST",
-        mode: 'cors', // Gunakan cors untuk baca status
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          mode: "checkin",
-          token: item.token
-        })
-      });
-      await res.text();
-    } catch (err) {
-      console.error("Gagal sync item:", item.token);
-    }
-  }
-
-  // Hapus queue jika semua selesai
-  localStorage.removeItem("offline_scan");
-  badge("📡 Data Offline Tersinkron!", "success");
-  playSound("sukses");
-}
-
-/* =========================
-   KIRIM SCAN KE SERVER
-========================= */
-async function sendScan(token) {
-  try {
-    const res = await fetch(SHEET_URL, {
-      method: "POST",
-      mode: 'cors',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        mode: "checkin",
-        token: token
-      })
-    });
-
-    const result = await res.text();
-
-    if (result === "success") {
-      badge("✔ HADIR (Berhasil)", "success");
-      playSound("sukses");
-    } else if (result === "duplicate") {
-      badge("⚠ SUDAH CHECK-IN (Double)", "duplicate");
-      playSound("warning");
-    } else if (result === "notfound") {
-      badge("❌ TIDAK DITEMUKAN", "error");
-      playSound("error");
-    } else {
-      console.log("Respons lain:", result);
-      badge("⚠ Error Server", "error");
-    }
-
-  } catch (error) {
-    console.error("Error Scan:", error);
-    badge("❌ Gagal Mengirim", "error");
-    playSound("error");
-  }
-}
-
-/* =========================
-   HANDLER SAAT SCANNED
-========================= */
-async function onScanSuccess(token) {
-  // Cek koneksi internet
-  if (!navigator.onLine) {
-    simpanOffline(token);
+  // Cek duplikat lokal
+  let scanned = getStore(scannedKey);
+  if(scanned.includes(token)){
+    showBadge("⚠ DUPLIKAT (LOKAL)","duplicate");
+    playSound("warning"); vibrate(400);
+    locked=false;
     return;
   }
+  scanned.push(token);
+  setStore(scannedKey,scanned);
 
-  // Jika Online, kirim langsung
-  await sendScan(token);
+  if(navigator.onLine) await sendScan(token);
+  else saveOffline(token);
+
+  setTimeout(()=>locked=false,2500);
 }
 
 /* =========================
-   LISTENER STATUS JARINGAN
+   INIT SCANNER
 ========================= */
-function updateNet(){
-  netStatus.innerText = navigator.onLine ? "🔵 ONLINE" : "🔴 OFFLINE";
-}
-window.addEventListener("online", syncOffline);
-window.addEventListener("online", updateNet);
-window.addEventListener("offline", updateNet);
-updateNet();
-
-// Init Scanner
 new Html5Qrcode("reader").start(
   { facingMode: "environment" },
-  { fps: 10, qrbox: 250 },
+  { fps:10, qrbox:250 },
   onScanSuccess
 );
