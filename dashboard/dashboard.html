@@ -42,25 +42,43 @@ button {
 }
 
 table {
-  width:100%;
-  border-collapse:collapse;
-  margin-top:15px;
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  table-layout: fixed; /* Kolom rapi */
 }
+
 th, td {
-  border-bottom:1px solid #333;
-  padding:8px;
-  font-size:0.9rem;
+  border: 1px solid #333;
+  padding: 10px 8px;
+  font-size: 0.9rem;
+  text-align: left;
+  word-wrap: break-word; /* teks panjang wrap */
 }
-th { color:#fff; }
+
+th {
+  background-color: #1a1613;
+  color: #fff;
+}
+
+td {
+  background-color: #0f0c0a;
+}
+
+tr:nth-child(even) td {
+  background-color: #1c1814; /* zebra stripe */
+}
+
+.success { color:#00ff9c; font-weight:bold; } /* Hadir */
+.warn { color:#ffcc00; font-weight:bold; }   /* Belum Hadir */
+.danger { color:#ff4c4c; font-weight:bold; } /* Tidak Hadir */
 
 .hidden { display:none; }
-.success { color:#00ff9c; } /* Hadir */
-.warn { color:#ffcc00; }    /* Belum Hadir */
-.danger { color:#ff4c4c; }  /* Tidak Hadir */
 
 @media(max-width:600px){
   .stats { flex-direction:column; }
   .card { width:100%; margin-bottom:10px; }
+  th, td { font-size:0.8rem; padding:6px 4px; }
 }
 </style>
 </head>
