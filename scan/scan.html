@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Scan QR Pernikahan</title>
+<title>Scan QR Pernikahan - Premium</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="manifest" href="manifest.json">
 
@@ -28,6 +28,11 @@ body {
   font-size:1.1rem;
   border-radius:10px;
   display:block;
+  transition: all 0.3s ease;
+  opacity:0;
+}
+#badge.show, #status.show{
+  opacity:1;
 }
 .success{background:#1e7f43;color:#fff}
 .duplicate{background:#a67c00;color:#000}
@@ -36,23 +41,41 @@ body {
 .status.ok{background:#1e7f43;color:#fff}
 .status.warn{background:#a67c00;color:#000}
 .status.err{background:#7f1e1e;color:#fff}
+
+/* Progress bar */
+#progress{
+  width:300px;
+  height:15px;
+  background:#333;
+  border-radius:10px;
+  margin:20px auto;
+  overflow:hidden;
+  display:none;
+}
+#progress div{
+  height:100%;
+  width:0%;
+  background:#d4af6a;
+  transition: width 0.4s ease;
+}
 </style>
 </head>
 <body>
 
-<h2>SCAN QR TAMU</h2>
+<h2>SCAN QR TAMU - PREMIUM</h2>
 <p id="netStatus">🔵 ONLINE</p>
 
 <div id="reader"></div>
+<div id="progress"><div></div></div>
 <div id="badge"></div>
 <div id="status"></div>
 
-<!-- SOUND -->
-<audio id="sukses" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
-<audio id="warning" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+<!-- SOUND PREMIUM -->
+<audio id="sukses" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+<audio id="warning" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 <audio id="error" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"></audio>
+<audio id="offline" src="https://actions.google.com/sounds/v1/cartoon/slide_whistle.ogg"></audio>
 
 <script src="scan.js"></script>
-
 </body>
 </html>
