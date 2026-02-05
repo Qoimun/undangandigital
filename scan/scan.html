@@ -1,161 +1,148 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Vendor Scan QR — Wedding Check-in</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Scan QR Check-in</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- QR Scanner -->
-  <script src="https://unpkg.com/html5-qrcode"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
 
-  <style>
-    body {
-      background: #0f0c0a;
-      color: #d4af6a;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 20px;
-    }
-
-    h1 {
-      font-size: 1.4rem;
-      margin-bottom: 10px;
-    }
-
-    #reader {
-      width: 320px;
-      margin: 20px auto;
-      border: 3px solid #d4af6a;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
-    #status {
-      margin-top: 20px;
-      font-size: 1rem;
-      padding: 12px;
-      border-radius: 8px;
-    }
-
-    .success { background: #1e7f43; color: #fff; }
-    .duplicate { background: #a67c00; color: #000; }
-    .error { background: #7f1e1e; color: #fff; }
-
-    .offline {
-      margin-top: 15px;
-      font-size: 0.8rem;
-      color: #aaa;
-    }
-  </style>
+<style>
+body {
+  background:#0f0c0a;
+  color:#d4af6a;
+  font-family:Arial, sans-serif;
+  text-align:center;
+  padding:20px;
+}
+h2 { margin-bottom:5px; }
+#reader {
+  width:320px;
+  margin:20px auto;
+  border:3px solid #d4af6a;
+  border-radius:14px;
+}
+#badge {
+  margin-top:20px;
+  padding:14px;
+  font-size:1.1rem;
+  border-radius:10px;
+  display:none;
+}
+.success { background:#1e7f43; color:#fff; }
+.duplicate { background:#a67c00; color:#000; }
+.error { background:#7f1e1e; color:#fff; }
+</style>
 </head>
 
 <body>
 
-  <h1>SCAN QR TAMU</h1>
-  <p>Arahkan kamera ke QR Undangan</p>
+<h2>SCAN QR TAMU</h2>
+<p>Arahkan kamera ke QR undangan</p>
 
-  <div id="reader"></div>
-  <div id="status"></div>
-  <div class="offline" id="offlineInfo"></div>
+<div id="reader"></div>
+<div id="badge"></div>
+
+<!-- SOUND -->
+<audio id="soundSuccess" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+<audio id="soundDuplicate" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+<audio id="soundError" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"></audio>
 
 <script>
-/* ==============================
+/* =============================
    KONFIGURASI
-================================ */
-const SHEET_URL = "https://script.google.com/macros/s/AKfycbw8hlNUj25__RM2eKvzSA6lgfbXRsiOmR6aUdvCaRTDF9MH6XGek02EAMyqvMYOOt-6eQ/exec";
-const OFFLINE_KEY = "offline_checkin_queue";
+============================= */
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw8hlNUj25__RM2eKvzSA6lgfbXRsiOmR6aUdvCaRTDF9MH6XGek02EAMyqvMYOOt-6eQ/exec";
 
-/* ==============================
-   STATUS UI
-================================ */
-function showStatus(msg, type) {
-  const el = document.getElementById("status");
-  el.className = type;
-  el.innerText = msg;
+let locked = false;
+
+/* =============================
+   BADGE UI
+============================= */
+function showBadge(text, type){
+  const b = document.getElementById("badge");
+  b.className = type;
+  b.innerText = text;
+  b.style.display = "block";
 }
 
-/* ==============================
-   OFFLINE QUEUE
-================================ */
-function saveOffline(token) {
-  const q = JSON.parse(localStorage.getItem(OFFLINE_KEY) || "[]");
-  q.push({ token, time: Date.now() });
-  localStorage.setItem(OFFLINE_KEY, JSON.stringify(q));
-  document.getElementById("offlineInfo").innerText =
-    "⚠ Offline mode — data disimpan lokal (" + q.length + ")";
+/* =============================
+   SOUND + VIBRATE
+============================= */
+function playSuccess(){
+  document.getElementById("soundSuccess").play();
+  navigator.vibrate?.(150);
 }
 
-/* ==============================
-   SYNC OFFLINE DATA
-================================ */
-function syncOffline() {
-  const q = JSON.parse(localStorage.getItem(OFFLINE_KEY) || "[]");
-  if (!q.length) return;
-
-  q.forEach(item => {
-    sendCheckin(item.token, true);
-  });
-
-  localStorage.removeItem(OFFLINE_KEY);
-  document.getElementById("offlineInfo").innerText = "";
+function playDuplicate(){
+  document.getElementById("soundDuplicate").play();
+  navigator.vibrate?.(400);
 }
 
-/* ==============================
-   KIRIM CHECK-IN
-================================ */
-function sendCheckin(token, silent=false) {
+function playError(){
+  document.getElementById("soundError").play();
+  navigator.vibrate?.([200,100,200]);
+}
+
+/* =============================
+   CHECK-IN
+============================= */
+function sendCheckin(token){
+  if(locked) return;
+  locked = true;
+
+  showBadge("⏳ Memproses...", "duplicate");
+
   const body = new URLSearchParams({
     mode: "checkin",
     token: token
   });
 
-  fetch(SHEET_URL, {
+  fetch(SCRIPT_URL, {
     method: "POST",
     body
   })
   .then(res => res.text())
   .then(res => {
-    if (!silent) {
-      if (res === "success") {
-        showStatus("✔ Check-in berhasil", "success");
-      } else if (res === "duplicate") {
-        showStatus("⚠ Sudah check-in", "duplicate");
-      } else {
-        showStatus("❌ Data tidak ditemukan", "error");
-      }
+    if(res === "success"){
+      playSuccess();
+      showBadge("✔ HADIR", "success");
+    } 
+    else if(res === "duplicate"){
+      playDuplicate();
+      showBadge("⚠ SUDAH CHECK-IN", "duplicate");
+    } 
+    else {
+      playError();
+      showBadge("❌ DATA TIDAK DITEMUKAN", "error");
     }
   })
   .catch(() => {
-    saveOffline(token);
-    showStatus("📴 Offline — disimpan sementara", "duplicate");
+    playError();
+    showBadge("❌ GAGAL KONEKSI", "error");
+  })
+  .finally(() => {
+    setTimeout(() => locked = false, 2500);
   });
 }
 
-/* ==============================
+/* =============================
    SCAN SUCCESS
-================================ */
-function onScanSuccess(decodedText) {
-  showStatus("⏳ Memproses...", "duplicate");
-  sendCheckin(decodedText);
+============================= */
+function onScanSuccess(text){
+  sendCheckin(text.trim());
 }
 
-/* ==============================
+/* =============================
    INIT SCANNER
-================================ */
+============================= */
 const scanner = new Html5Qrcode("reader");
-
 scanner.start(
-  { facingMode: "environment" },
-  { fps: 10, qrbox: 250 },
+  { facingMode:"environment" },
+  { fps:10, qrbox:250 },
   onScanSuccess
 );
-
-/* ==============================
-   AUTO SYNC SAAT ONLINE
-================================ */
-window.addEventListener("online", syncOffline);
 </script>
 
 </body>
 </html>
-
