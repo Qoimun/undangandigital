@@ -22,24 +22,41 @@ function setStore(key,val){ localStorage.setItem(key,JSON.stringify(val)); }
    UI + SOUND + VIBRATE
 ========================= */
 function showBadge(text,type){
+  console.log("Badge:", text, type);
   badgeBox.innerText=text;
   badgeBox.className=type+" show";
   setTimeout(()=>badgeBox.classList.remove("show"),2000);
 }
 function showStatus(text,type){
+  console.log("Status:", text, type);
   statusBox.innerText=text;
   statusBox.className=type+" show";
   setTimeout(()=>statusBox.classList.remove("show"),2000);
 }
-function playSound(id){ const audio=document.getElementById(id); if(audio){ audio.currentTime=0; audio.play(); } }
+function playSound(id){ 
+  const audio=document.getElementById(id); 
+  if(audio){ audio.currentTime=0; audio.play(); console.log("Sound:", id); }
+}
 function vibrate(ms){ navigator.vibrate?.(ms); }
-function startProgress(){ progressBar.parentElement.style.display="block"; progressBar.style.width="0%"; setTimeout(()=>progressBar.style.width="100%",50); }
-function endProgress(){ setTimeout(()=>{ progressBar.parentElement.style.display="none"; progressBar.style.width="0%"; },400); }
+
+/* =========================
+   PROGRESS BAR
+========================= */
+function startProgress(){ 
+  progressBar.parentElement.style.display="block"; 
+  progressBar.style.width="0%"; 
+  setTimeout(()=>progressBar.style.width="100%",50); 
+}
+function endProgress(){ 
+  setTimeout(()=>{ progressBar.parentElement.style.display="none"; progressBar.style.width="0%"; },400); 
+}
 
 /* =========================
    NETWORK STATUS
 ========================= */
-function updateNet(){ netStatus.innerText = navigator.onLine ? "🔵 ONLINE" : "🔴 OFFLINE"; }
+function updateNet(){ 
+  netStatus.innerText = navigator.onLine ? "🔵 ONLINE" : "🔴 OFFLINE"; 
+}
 window.addEventListener("online",()=>{ updateNet(); syncOfflineQueue(); });
 window.addEventListener("offline", updateNet);
 updateNet();
@@ -52,10 +69,13 @@ async function syncOfflineQueue(){
   const queue = getStore(offlineKey);
   if(queue.length===0) return;
 
+  console.log("Syncing offline queue:", queue);
+
   for(let token of queue){
     try{
-      await fetch(SCRIPT_URL,{ method:"POST", body:new URLSearchParams({mode:"checkin", token}) });
-    }catch(e){ console.error("Gagal sync token:", token); }
+      const res = await fetch(SCRIPT_URL,{ method:"POST", body:new URLSearchParams({mode:"checkin", token}) });
+      console.log("Synced token:", token, "Response:", await res.text());
+    }catch(e){ console.error("Gagal sync token:", token, e); }
   }
 
   setStore(offlineKey,[]);
@@ -64,7 +84,7 @@ async function syncOfflineQueue(){
 }
 
 /* =========================
-   KIRIM SCAN KE SERVER
+   SEND SCAN ONLINE
 ========================= */
 async function sendScan(token){
   startProgress();
@@ -75,6 +95,7 @@ async function sendScan(token){
     });
     const result = await res.text();
     endProgress();
+    console.log("Server Response:", result);
 
     if(result==="success"){ showBadge("✔ HADIR","success"); showStatus("✔ HADIR (Berhasil)","status ok"); playSound("sukses"); vibrate(150); }
     else if(result==="duplicate"){ showBadge("⚠ SUDAH CHECK-IN","duplicate"); showStatus("⚠ SUDAH CHECK-IN (Double)","status warn"); playSound("warning"); vibrate(400); }
@@ -90,7 +111,7 @@ async function sendScan(token){
 }
 
 /* =========================
-   SIMPAN OFFLINE
+   SAVE OFFLINE
 ========================= */
 function saveOffline(token){
   const queue = getStore(offlineKey);
@@ -111,10 +132,13 @@ function saveOffline(token){
    HANDLER SCAN
 ========================= */
 async function onScanSuccess(token){
+  console.log("QR Scanned:", token);
   if(locked) return;
   locked=true;
 
   let scanned = getStore(scannedKey);
+  console.log("Scanned Local:", scanned);
+
   if(scanned.includes(token)){
     showBadge("⚠ DUPLIKAT (LOKAL)","duplicate");
     playSound("warning");
@@ -122,6 +146,7 @@ async function onScanSuccess(token){
     locked=false;
     return;
   }
+
   scanned.push(token);
   setStore(scannedKey,scanned);
 
