@@ -11,133 +11,177 @@
 <!-- Icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-<!-- QRCode -->
+<!-- QR -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-<!-- Three.js -->
+<!-- THREE -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <style>
-body {
-  margin:0;
-  font-family:Poppins,sans-serif;
-  background:#050505;
-  color:#f0f0f0;
-  overflow-x:hidden;
+:root{
+--gold:#d4af6a;
+--dark:#050505;
+--glass:rgba(25,25,25,.6);
 }
-h1,h2,h3 {font-family:'Playfair Display',serif;color:#d4af6a}
-.font-script{font-family:'Great Vibes',cursive}
-.section{padding:100px 20px}
-.container{max-width:1000px;margin:auto}
-.glass{background:rgba(20,20,20,.6);backdrop-filter:blur(10px);border-radius:20px;padding:30px;border:1px solid rgba(212,175,106,.2)}
+
+*{box-sizing:border-box}
+body{
+margin:0;
+font-family:Poppins,sans-serif;
+background:var(--dark);
+color:#eee;
+overflow-x:hidden;
+}
+
+h1,h2,h3{font-family:"Playfair Display";color:var(--gold)}
+.font-script{font-family:"Great Vibes"}
+
+.section{padding:120px 20px;position:relative;z-index:2}
+.container{max-width:1100px;margin:auto}
 .text-center{text-align:center}
 
+/* GLASS + 3D */
+.glass{
+background:var(--glass);
+backdrop-filter:blur(14px);
+border-radius:22px;
+padding:35px;
+border:1px solid rgba(212,175,106,.25);
+box-shadow:0 20px 60px rgba(0,0,0,.6);
+transform-style:preserve-3d;
+transition:.6s cubic-bezier(.2,.8,.2,1);
+}
+.glass:hover{
+transform:translateY(-10px) rotateX(4deg);
+box-shadow:0 40px 90px rgba(0,0,0,.9);
+}
+
+/* COVER */
 #cover{
 position:fixed;inset:0;
 background:url("https://picsum.photos/1920/1080?blur=2") center/cover;
-z-index:999;display:flex;align-items:center;justify-content:center
+z-index:999;
+display:flex;align-items:center;justify-content:center;
 }
-#cover::before{content:"";position:absolute;inset:0;background:rgba(0,0,0,.7)}
+#cover::before{
+content:"";position:absolute;inset:0;
+background:radial-gradient(circle at top,rgba(0,0,0,.6),#000);
+}
 #cover-content{position:relative;text-align:center}
 .btn{
-background:#d4af6a;color:#000;
-padding:15px 40px;border-radius:40px;
-border:none;font-weight:700;cursor:pointer
+background:linear-gradient(135deg,#f6e7b2,var(--gold));
+color:#000;
+padding:16px 46px;
+border-radius:40px;
+border:none;
+font-weight:700;
+cursor:pointer;
+box-shadow:0 10px 30px rgba(212,175,106,.5);
+transition:.4s;
 }
+.btn:hover{transform:scale(1.08)}
 
+/* MUSIC */
 #music-btn{
-position:fixed;bottom:20px;right:20px;
-width:55px;height:55px;border-radius:50%;
-background:#d4af6a;color:#000;
+position:fixed;bottom:22px;right:22px;
+width:58px;height:58px;border-radius:50%;
+background:var(--gold);color:#000;
 display:flex;align-items:center;justify-content:center;
-z-index:1000;cursor:pointer
+z-index:1000;
+cursor:pointer;
+box-shadow:0 0 25px var(--gold);
+animation:float 3s ease-in-out infinite;
+}
+@keyframes float{
+50%{transform:translateY(-12px)}
 }
 
-.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
-.gallery img{width:100%;border-radius:15px}
-
+/* FORM */
 input,textarea,select{
-width:100%;padding:15px;border-radius:10px;
-border:none;margin-bottom:15px
+width:100%;padding:16px;
+border-radius:12px;
+border:none;margin-bottom:16px;
+background:#111;color:#fff;
 }
-button.submit{width:100%;padding:15px;background:#d4af6a;border:none;font-weight:700}
+button.submit{
+width:100%;
+padding:16px;
+border-radius:14px;
+border:none;
+background:var(--gold);
+font-weight:700;
+cursor:pointer;
+}
 
+.gallery{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+gap:18px;
+}
+.gallery img{
+width:100%;
+border-radius:18px;
+transition:.6s;
+transform-style:preserve-3d;
+}
+.gallery img:hover{
+transform:rotateY(12deg) rotateX(6deg) scale(1.06);
+}
+
+/* TOAST */
+.toast{
+position:fixed;
+bottom:30px;left:50%;
+transform:translateX(-50%);
+background:var(--gold);
+color:#000;
+padding:14px 28px;
+border-radius:30px;
+font-weight:600;
+box-shadow:0 0 30px var(--gold);
+z-index:9999;
+animation:fade 3s forwards;
+}
+@keyframes fade{
+0%{opacity:0;transform:translate(-50%,20px)}
+10%{opacity:1}
+90%{opacity:1}
+100%{opacity:0}
+}
 </style>
 </head>
+
 <body>
 
 <!-- AUDIO -->
-<audio id="bg-music" loop preload="auto">
-  <source src="music.mp3" type="audio/mpeg">
+<audio id="bg-music" loop>
+<source src="music.mp3" type="audio/mpeg">
 </audio>
 
-<!-- MUSIC BUTTON -->
 <div id="music-btn" onclick="toggleMusic()">
-  <i class="fas fa-music"></i>
+<i class="fas fa-music"></i>
 </div>
 
 <!-- COVER -->
 <div id="cover">
-  <div id="cover-content">
-    <h3>The Wedding Of</h3>
-    <h1 class="font-script" style="font-size:4rem">Fulan & Fulanah</h1>
-    <p>23 Mei 2026</p>
-    <button class="btn" onclick="openInvitation()">Buka Undangan</button>
-  </div>
+<div id="cover-content">
+<h3>The Wedding Of</h3>
+<h1 class="font-script" style="font-size:4.5rem">Fulan & Fulanah</h1>
+<p>23 Mei 2026</p>
+<button class="btn" onclick="openInvitation()">Buka Undangan</button>
+</div>
 </div>
 
 <!-- HERO -->
 <section class="section text-center">
-  <h1 class="font-script" style="font-size:4rem">Fulan & Fulanah</h1>
-  <p>Sabtu, 23 Mei 2026</p>
-</section>
-
-<!-- MEMPELAI -->
-<section class="section">
-<div class="container text-center">
-<h2 class="font-script" style="font-size:3rem">Mempelai</h2>
-<div class="glass">
-<h3>Fulan bin Fulan</h3>
-<p>Putra dari Bpk Fulan & Ibu Fulanah</p>
-</div><br>
-<div class="glass">
-<h3>Fulanah binti Fulan</h3>
-<p>Putri dari Bpk Fulan & Ibu Fulanah</p>
-</div>
-</div>
-</section>
-
-<!-- EVENT -->
-<section class="section">
-<div class="container text-center">
-<h2>Akad & Resepsi</h2>
-<div class="glass">
-<p><b>Akad:</b> 08.00 WIB</p>
-<p>Masjid Agung Gawok</p>
-<a href="https://maps.google.com" target="_blank">📍 Google Maps</a>
-<hr>
-<p><b>Resepsi:</b> 11.00 WIB</p>
-<p>Ballroom Hotel Gawok</p>
-</div>
-</div>
-</section>
-
-<!-- STORY -->
-<section class="section">
-<div class="container">
-<h2 class="text-center font-script" style="font-size:3rem">Our Story</h2>
-<div class="glass">
-<p><b>2020</b> – Pertemuan pertama</p>
-<p><b>2024</b> – Lamaran</p>
-<p><b>2026</b> – Menikah</p>
-</div>
-</div>
+<h1 class="font-script" style="font-size:4.5rem">Fulan & Fulanah</h1>
+<p>Sabtu, 23 Mei 2026</p>
 </section>
 
 <!-- GALLERY -->
 <section class="section">
 <div class="container">
-<h2 class="text-center font-script" style="font-size:3rem">Galeri</h2>
+<h2 class="text-center">Galeri</h2>
 <div class="gallery">
 <img src="https://picsum.photos/400/600?1">
 <img src="https://picsum.photos/400/600?2">
@@ -147,26 +191,27 @@ button.submit{width:100%;padding:15px;background:#d4af6a;border:none;font-weight
 </div>
 </section>
 
-<!-- VIDEO -->
-<section class="section text-center">
-<div class="container glass">
-<iframe width="100%" height="400" src="https://www.youtube.com/embed/dQw4w9WgXcQ" allowfullscreen></iframe>
-</div>
-</section>
-
 <!-- RSVP -->
 <section class="section">
 <div class="container">
 <h2 class="text-center">RSVP & Ucapan</h2>
 <div class="glass">
-<input placeholder="Nama">
-<select>
+<input id="nama" placeholder="Nama Lengkap">
+<select id="hadir">
 <option>Hadir</option>
 <option>Tidak Hadir</option>
 </select>
-<textarea placeholder="Ucapan & Doa"></textarea>
-<button class="submit">Kirim</button>
+<textarea id="pesan" placeholder="Ucapan & Doa"></textarea>
+<button class="submit" id="btnKirim">Kirim</button>
 </div>
+</div>
+</section>
+
+<!-- GUESTBOOK -->
+<section class="section">
+<div class="container">
+<h2 class="text-center">Ucapan Tamu</h2>
+<div id="guestbook"></div>
 </div>
 </section>
 
@@ -179,37 +224,70 @@ button.submit{width:100%;padding:15px;background:#d4af6a;border:none;font-weight
 </div>
 </section>
 
-<!-- LIVE -->
-<section class="section text-center">
-<a class="btn" href="https://youtube.com" target="_blank">🎥 Live Streaming</a>
-</section>
-
 <footer class="section text-center">
 <p class="font-script" style="font-size:2rem">Fulan & Fulanah</p>
 </footer>
 
 <script>
-let isPlaying=false;
+/* MUSIC */
 const audio=document.getElementById("bg-music");
-
 function openInvitation(){
 document.getElementById("cover").style.display="none";
-audio.volume=0.6;
+audio.volume=.6;
 audio.play();
-isPlaying=true;
-document.querySelector("#music-btn i").className="fas fa-pause";
 }
-
 function toggleMusic(){
-if(audio.paused){
-audio.play();
-document.querySelector("#music-btn i").className="fas fa-pause";
-}else{
-audio.pause();
-document.querySelector("#music-btn i").className="fas fa-music";
-}
+audio.paused?audio.play():audio.pause();
 }
 
+/* RSVP FIX TOTAL */
+const btn=document.getElementById("btnKirim");
+btn.addEventListener("click",kirim);
+
+function kirim(){
+const nama=namaEl= document.getElementById("nama").value;
+const hadir=document.getElementById("hadir").value;
+const pesan=document.getElementById("pesan").value;
+
+if(!nama||!pesan){
+toast("Mohon lengkapi data");
+return;
+}
+
+const data={nama,hadir,pesan,waktu:new Date().toLocaleString()};
+const list=JSON.parse(localStorage.getItem("guestbook")||"[]");
+list.unshift(data);
+localStorage.setItem("guestbook",JSON.stringify(list));
+
+renderGuestbook();
+toast("Terima kasih atas ucapannya ❤️");
+
+document.getElementById("nama").value="";
+document.getElementById("pesan").value="";
+}
+
+/* GUESTBOOK */
+function renderGuestbook(){
+const box=document.getElementById("guestbook");
+const list=JSON.parse(localStorage.getItem("guestbook")||"[]");
+box.innerHTML=list.map(d=>`
+<div class="glass" style="margin-bottom:20px">
+<b>${d.nama}</b> <small>(${d.hadir})</small>
+<p>${d.pesan}</p>
+</div>`).join("");
+}
+renderGuestbook();
+
+/* TOAST */
+function toast(msg){
+const t=document.createElement("div");
+t.className="toast";
+t.innerText=msg;
+document.body.appendChild(t);
+setTimeout(()=>t.remove(),3000);
+}
+
+/* QR */
 new QRCode(document.getElementById("gift-qr"),{
 text:"BCA 1234567890 a.n Fulan",
 width:150,height:150
